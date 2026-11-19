@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#123b63"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>清水東高校野球部 成績管理</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{--navy:#123b63;--blue:#2476b9;--pale:#eaf3fa;--bg:#f4f7fa;--ink:#172b3d;--muted:#607487;--line:#dbe4ec;--white:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
+header{background:linear-gradient(135deg,#123b63,#2476b9);color:white;padding:22px 18px 18px}
+.brand{font-size:12px;letter-spacing:2px;opacity:.85;font-weight:700}.headrow{display:flex;justify-content:space-between;align-items:center;gap:12px}
+h1{font-size:21px;margin:7px 0 3px}.season{font-size:12px;opacity:.85}
+main{max-width:980px;margin:auto;padding:14px 14px 90px}.tabs{display:flex;gap:7px;overflow:auto;padding:4px 0 12px;position:sticky;top:0;background:var(--bg);z-index:5}
+.tab{border:1px solid var(--line);background:white;border-radius:999px;padding:10px 14px;white-space:nowrap;font-weight:700;color:var(--muted)}
+.tab.active{background:var(--navy);color:white;border-color:var(--navy)}
+.panel{display:none}.panel.active{display:block}.card{background:white;border:1px solid var(--line);border-radius:16px;padding:15px;margin:0 0 13px;box-shadow:0 2px 8px #173b5d0a}
+h2{font-size:17px;margin:0 0 12px}.muted{color:var(--muted);font-size:12px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat{background:var(--pale);border-radius:12px;padding:12px}.stat b{display:block;font-size:23px;color:var(--navy)}.stat span{font-size:11px;color:var(--muted)}
+label{font-size:12px;font-weight:700;color:#40586c;display:block;margin:9px 0 5px}
+input,select,textarea{width:100%;padding:11px 12px;border:1px solid #cbd8e3;border-radius:10px;background:#fff;color:var(--ink);font-size:16px;min-width:0}
+input[type=file]{font-size:13px;padding:9px}button{border:0;border-radius:10px;background:var(--blue);color:white;padding:11px 14px;font-size:14px;font-weight:700}
+button.secondary{background:#e8eef4;color:var(--navy)}button.danger{background:#fff0f0;color:#a32626}button.small{padding:7px 10px;font-size:12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 10px}
+table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}th{background:#edf3f8;color:#31516c;text-align:left}td,th{padding:9px 8px;border-bottom:1px solid var(--line)}.tablewrap{overflow:auto}
+.empty{padding:20px;text-align:center;color:var(--muted);font-size:13px}
+.rowtitle{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.badge{font-size:11px;padding:4px 8px;border-radius:999px;background:#e9f3fb;color:#1d6095}
+#photoPreview{max-width:100%;max-height:320px;display:none;margin-top:10px;border-radius:10px}
+.notice{border-left:4px solid #e1aa38;background:#fff8e7;padding:10px 12px;border-radius:8px;font-size:12px;line-height:1.6}
+footer{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;border-top:1px solid var(--line);padding:9px 14px calc(9px + env(safe-area-inset-bottom));text-align:center;color:var(--muted);font-size:11px}
+@media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}.formgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style></head>
+<body>
+<header><div class="headrow"><div><div class="brand">SHIMIZU HIGASHI BASEBALL TEAM</div><h1>選手成績管理</h1><div class="season">試合記録・打撃成績・投手成績</div></div><div style="font-size:34px">⚾</div></div></header>
+<main>
+<nav class="tabs">
+<button class="tab active" data-tab="home">ホーム</button><button class="tab" data-tab="games">試合登録</button><button class="tab" data-tab="bat">打撃入力</button><button class="tab" data-tab="pitch">投手入力</button><button class="tab" data-tab="stats">通算成績</button><button class="tab" data-tab="roster">選手登録</button><button class="tab" data-tab="backup">保存・移行</button>
+</nav>
+<section id="home" class="panel active">
+<div class="card"><h2>チーム成績サマリー</h2><div class="grid">
+<div class="stat"><b id="gameCount">0</b><span>登録試合</span></div><div class="stat"><b id="playerCount">0</b><span>登録選手</span></div><div class="stat"><b id="batCount">0</b><span>打撃記録</span></div><div class="stat"><b id="pitchCount">0</b><span>投手記録</span></div></div></div>
+<div class="card"><div class="rowtitle"><h2>最近の試合</h2><span class="badge">試合一覧</span></div><div id="recentGames" class="empty">まだ試合が登録されていません。</div></div>
+<div class="card"><h2>使い方</h2><ol class="muted" style="padding-left:20px"><li>「選手登録」で背番号・選手名を登録</li><li>「試合登録」で日付・対戦相手・得点を登録</li><li>「打撃入力」「投手入力」で試合ごとの成績を追加</li><li>「通算成績」で選手別の累計を確認</li><li>「保存・移行」から定期的にバックアップ</li></ol><div class="notice">この試作版は入力したデータを、この端末・ブラウザ内に保存します。ブラウザのデータ消去や端末変更に備え、定期的にバックアップしてください。</div></div>
+</section>
+<section id="games" class="panel"><div class="card"><h2>試合を登録</h2><div class="formgrid">
+<div><label>試合日</label><input id="gDate" type="date"></div><div><label>大会・区分</label><input id="gType" placeholder="例：練習試合・秋季大会"></div><div><label>対戦相手</label><input id="gOpponent" placeholder="例：富士高校"></div><div><label>球場</label><input id="gVenue" placeholder="球場名"></div><div><label>清水東 得点</label><input id="gUs" type="number" min="0"></div><div><label>相手 得点</label><input id="gThem" type="number" min="0"></div></div><label>メモ</label><input id="gMemo" placeholder="試合のメモ（任意）"><div class="actions"><button onclick="addGame()">試合を保存</button></div></div><div class="card"><h2>登録済み試合</h2><div id="gamesTable" class="empty">試合データはありません。</div></div></section>
+<section id="bat" class="panel"><div class="card"><h2>打撃成績を入力</h2><div class="formgrid">
+<div><label>試合</label><select id="bGame"></select></div><div><label>選手</label><select id="bPlayer"></select></div><div><label>打順</label><input id="bOrder" type="number" min="1" max="9"></div>
+<div><label>打席</label><input id="bPA" type="number" min="0" value="0"></div><div><label>打数</label><input id="bAB" type="number" min="0" value="0"></div><div><label>安打</label><input id="bH" type="number" min="0" value="0"></div>
+<div><label>二塁打</label><input id="b2B" type="number" min="0" value="0"></div><div><label>三塁打</label><input id="b3B" type="number" min="0" value="0"></div><div><label>本塁打</label><input id="bHR" type="number" min="0" value="0"></div>
+<div><label>打点</label><input id="bRBI" type="number" min="0" value="0"></div><div><label>得点</label><input id="bR" type="number" min="0" value="0"></div><div><label>四球</label><input id="bBB" type="number" min="0" value="0"></div>
+<div><label>死球</label><input id="bHBP" type="number" min="0" value="0"></div><div><label>三振</label><input id="bSO" type="number" min="0" value="0"></div><div><label>犠打</label><input id="bSH" type="number" min="0" value="0"></div>
+<div><label>犠飛</label><input id="bSF" type="number" min="0" value="0"></div><div><label>盗塁</label><input id="bSB" type="number" min="0" value="0"></div></div><div class="actions"><button onclick="addBat()">打撃記録を保存</button></div><p class="muted">1試合につき選手1人1行で入力します。未出場選手は入力不要です。</p></div><div class="card"><h2>最近の打撃入力</h2><div id="batTable" class="empty">打撃記録はありません。</div></div></section>
+<section id="pitch" class="panel"><div class="card"><h2>投手成績を入力</h2><div class="formgrid">
+<div><label>試合</label><select id="pGame"></select></div><div><label>投手</label><select id="pPlayer"></select></div><div><label>投球回（アウト数）</label><input id="pOuts" type="number" min="0" value="0"></div>
+<div><label>投球数</label><input id="pNP" type="number" min="0" value="0"></div><div><label>打者数</label><input id="pBF" type="number" min="0" value="0"></div><div><label>被安打</label><input id="pH" type="number" min="0" value="0"></div>
+<div><label>被本塁打</label><input id="pHR" type="number" min="0" value="0"></div><div><label>奪三振</label><input id="pSO" type="number" min="0" value="0"></div><div><label>与四球</label><input id="pBB" type="number" min="0" value="0"></div>
+<div><label>与死球</label><input id="pHBP" type="number" min="0" value="0"></div><div><label>失点</label><input id="pR" type="number" min="0" value="0"></div><div><label>自責点</label><input id="pER" type="number" min="0" value="0"></div>
+<div><label>勝利</label><select id="pW"><option value="0">なし</option><option value="1">あり</option></select></div><div><label>敗戦</label><select id="pL"><option value="0">なし</option><option value="1">あり</option></select></div><div><label>セーブ</label><select id="pSV"><option value="0">なし</option><option value="1">あり</option></select></div></div><div class="actions"><button onclick="addPitch()">投手記録を保存</button></div><p class="muted">投球回はアウト数で入力します。例：6回2/3＝20アウト、5回1/3＝16アウト。</p></div><div class="card"><h2>最近の投手入力</h2><div id="pitchTable" class="empty">投手記録はありません。</div></div></section>
+<section id="stats" class="panel"><div class="card"><h2>選手別・打撃通算</h2><div id="batStats" class="empty">選手と打撃記録を登録してください。</div></div><div class="card"><h2>選手別・投手通算</h2><div id="pitchStats" class="empty">投手記録を登録してください。</div></div></section>
+<section id="roster" class="panel"><div class="card"><h2>選手を登録</h2><div class="formgrid"><div><label>背番号</label><input id="rNo" placeholder="例：1"></div><div><label>選手名</label><input id="rName" placeholder="選手名"></div><div><label>学年</label><select id="rGrade"><option value="">未設定</option><option>1年</option><option>2年</option><option>3年</option></select></div><div><label>守備位置</label><input id="rPos" placeholder="例：投手・遊撃手"></div></div><div class="actions"><button onclick="addPlayer()">選手を登録</button></div></div><div class="card"><h2>登録選手一覧</h2><div id="rosterTable" class="empty">選手はまだ登録されていません。</div></div></section>
+<section id="backup" class="panel"><div class="card"><h2>データのバックアップ</h2><p class="muted">試合・選手・打撃・投手データをJSONファイルに保存できます。別の端末に移すときも、このファイルを読み込んでください。</p><div class="actions"><button onclick="exportData()">バックアップを書き出す</button><label style="margin:0"><input type="file" id="importFile" accept=".json,application/json" onchange="importData(event)"></label></div></div><div class="card"><h2>CSV出力</h2><p class="muted">通算成績を表計算ソフトで確認できます。</p><div class="actions"><button class="secondary" onclick="exportCSV('bat')">打撃通算CSV</button><button class="secondary" onclick="exportCSV('pitch')">投手通算CSV</button></div></div><div class="card"><h2>スコア写真について</h2><label>写真を選択して確認</label><input type="file" accept="image/*" capture="environment" id="scorePhoto" onchange="previewPhoto(event)"><img id="photoPreview"><p class="muted">この試作版では写真の保管・プレビューまで対応しています。手書きスコアのAI自動読取は未接続です。写真をChatGPTに送って読み取り、確認した数値を入力する運用から始められます。</p></div><div class="card"><button class="danger" onclick="clearData()">この端末のデータをすべて削除</button><p class="muted">削除前に必ずバックアップしてください。</p></div></section>
+</main><footer>清水東高校野球部｜成績管理 試作版</footer>
+<script>
+const KEY='shimizuBaseballDataV1';
+let db=JSON.parse(localStorage.getItem(KEY)||'{"players":[],"games":[],"bat":[],"pitch":[]}');
+const $=id=>document.getElementById(id), num=id=>Number($(id).value||0);
+function save(){localStorage.setItem(KEY,JSON.stringify(db));render()}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function playerName(id){return db.players.find(x=>x.id===id)?.name||'不明'}
+function gameName(id){let g=db.games.find(x=>x.id===id);return g?`${g.date} ${g.opponent}`:'不明'}
+function table(headers,rows){if(!rows.length)return '<div class="empty">データはありません。</div>';return `<div class="tablewrap"><table><thead><tr>${headers.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(x=>`<td>${x}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`}
+function addGame(){let opponent=$('gOpponent').value.trim();if(!opponent)return alert('対戦相手を入力してください');db.games.push({id:crypto.randomUUID(),date:$('gDate').value||new Date().toISOString().slice(0,10),type:$('gType').value,opponent,venue:$('gVenue').value,us:num('gUs'),them:num('gThem'),memo:$('gMemo').value});['gType','gOpponent','gVenue','gUs','gThem','gMemo'].forEach(id=>$(id).value='');save();alert('試合を保存しました')}
+function addPlayer(){let name=$('rName').value.trim();if(!name)return alert('選手名を入力してください');if(db.players.some(p=>p.name===name))return alert('同じ選手名が登録されています');db.players.push({id:crypto.randomUUID(),no:$('rNo').value.trim(),name,grade:$('rGrade').value,pos:$('rPos').value.trim()});['rNo','rName','rGrade','rPos'].forEach(id=>$(id).value='');save()}
+function val(id){return num(id)}
+function addBat(){if(!db.games.length||!db.players.length)return alert('先に試合と選手を登録してください');let player=$('bPlayer').value,game=$('bGame').value;if(!player||!game)return alert('試合と選手を選択してください');let x={id:crypto.randomUUID(),game,player,order:val('bOrder')};[['PA','bPA'],['AB','bAB'],['H','bH'],['2B','b2B'],['3B','b3B'],['HR','bHR'],['RBI','bRBI'],['R','bR'],['BB','bBB'],['HBP','bHBP'],['SO','bSO'],['SH','bSH'],['SF','bSF'],['SB','bSB']].forEach(([k,id])=>x[k]=val(id));db.bat.push(x);save();alert('打撃記録を保存しました')}
+function addPitch(){if(!db.games.length||!db.players.length)return alert('先に試合と選手を登録してください');let player=$('pPlayer').value,game=$('pGame').value;if(!player||!game)return alert('試合と投手を選択してください');let x={id:crypto.randomUUID(),game,player};[['outs','pOuts'],['NP','pNP'],['BF','pBF'],['H','pH'],['HR','pHR'],['SO','pSO'],['BB','pBB'],['HBP','pHBP'],['R','pR'],['ER','pER'],['W','pW'],['L','pL'],['SV','pSV']].forEach(([k,id])=>x[k]=val(id));db.pitch.push(x);save();alert('投手記録を保存しました')}
+function sum(arr,k){return arr.reduce((a,x)=>a+(Number(x[k])||0),0)}
+function average(h,ab){return ab?(h/ab).toFixed(3).replace(/^0/,''):'.000'}
+function render(){ $('gameCount').textContent=db.games.length;$('playerCount').textContent=db.players.length;$('batCount').textContent=db.bat.length;$('pitchCount').textContent=db.pitch.length;
+let opts=arr=>arr.map(x=>`<option value="${x.id}">${esc(x.name||`${x.date} ${x.opponent}`)}</option>`).join('');
+['bGame','pGame'].forEach(id=>$(id).innerHTML=opts(db.games));['bPlayer','pPlayer'].forEach(id=>$(id).innerHTML=opts(db.players));
+$('gamesTable').innerHTML=table(['日付','対戦相手','区分','得点','結果'],db.games.map(g=>[esc(g.date),esc(g.opponent),esc(g.type),`${g.us}－${g.them}`,g.us>g.them?'勝':g.us<g.them?'敗':'分']));
+$('recentGames').innerHTML=db.games.length?table(['日付','対戦相手','得点'],db.games.slice(-5).reverse().map(g=>[esc(g.date),esc(g.opponent),`${g.us}－${g.them}`])):'まだ試合が登録されていません。';
+$('rosterTable').innerHTML=table(['背番号','選手名','学年','守備位置'],db.players.map(p=>[esc(p.no),esc(p.name),esc(p.grade),esc(p.pos)]));
+$('batTable').innerHTML=table(['試合','選手','打数','安打','打点','四球'],db.bat.slice(-8).reverse().map(x=>[esc(gameName(x.game)),esc(playerName(x.player)),x.AB,x.H,x.RBI,x.BB]));
+$('pitchTable').innerHTML=table(['試合','投手','投球回','投球数','奪三振','自責点'],db.pitch.slice(-8).reverse().map(x=>[esc(gameName(x.game)),esc(playerName(x.player)),`${Math.floor(x.outs/3)}${x.outs%3?` ${x.outs%3}/3`:''}`,x.NP,x.SO,x.ER]));
+let bats=db.players.map(p=>{let a=db.bat.filter(x=>x.player===p.id),ab=sum(a,'AB'),h=sum(a,'H'),bb=sum(a,'BB'),hbp=sum(a,'HBP'),sf=sum(a,'SF'),sh=sum(a,'SH'),tb=sum(a,'H')+sum(a,'2B')+2*sum(a,'3B')+3*sum(a,'HR');let obden=ab+bb+hbp+sf;return [esc(p.no),esc(p.name),a.length,sum(a,'PA'),ab,h,sum(a,'2B'),sum(a,'3B'),sum(a,'HR'),sum(a,'RBI'),sum(a,'R'),sum(a,'SO'),average(h,ab),obden?((h+bb+hbp)/obden).toFixed(3).replace(/^0/,''):'.000',ab?(tb/ab).toFixed(3).replace(/^0/,''):'.000']});
+$('batStats').innerHTML=table(['背番号','選手','試合記録','打席','打数','安打','二塁打','三塁打','本塁打','打点','得点','三振','打率','出塁率*','長打率'],bats);
+let pitches=db.players.map(p=>{let a=db.pitch.filter(x=>x.player===p.id),outs=sum(a,'outs'),er=sum(a,'ER');return [esc(p.no),esc(p.name),a.length,`${Math.floor(outs/3)}${outs%3?` ${outs%3}/3`:''}`,sum(a,'NP'),sum(a,'H'),sum(a,'SO'),sum(a,'BB'),sum(a,'W'),sum(a,'L'),sum(a,'SV'),outs?(er*27/outs).toFixed(2):'—']});
+$('pitchStats').innerHTML=table(['背番号','投手','登板','投球回','投球数','被安打','奪三振','与四球','勝','敗','S','防御率'],pitches);
+}
+function exportData(){let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='清水東野球部_成績バックアップ_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href)}
+function importData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.players||!x.games||!x.bat||!x.pitch)throw 0;if(!confirm('現在のデータを読み込んだデータで置き換えますか？'))return;db=x;save();alert('読み込みました')}catch{alert('ファイル形式が正しくありません')}};r.readAsText(f)}
+function csvCell(x){return '"'+String(x??'').replace(/"/g,'""')+'"'}
+function downloadCSV(name,rows){let csv='\ufeff'+rows.map(r=>r.map(csvCell).join(',')).join('\r\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=name+'.csv';a.click();URL.revokeObjectURL(a.href)}
+function exportCSV(type){if(type==='bat'){let rows=[['背番号','選手名','試合記録数','打席','打数','安打','二塁打','三塁打','本塁打','打点','得点','四球','死球','三振','打率']];db.players.forEach(p=>{let a=db.bat.filter(x=>x.player===p.id),ab=sum(a,'AB'),h=sum(a,'H');rows.push([p.no,p.name,a.length,sum(a,'PA'),ab,h,sum(a,'2B'),sum(a,'3B'),sum(a,'HR'),sum(a,'RBI'),sum(a,'R'),sum(a,'BB'),sum(a,'HBP'),sum(a,'SO'),average(h,ab)])});downloadCSV('清水東_打撃通算',rows)}else{let rows=[['背番号','選手名','登板','投球アウト数','投球数','被安打','奪三振','与四球','自責点','防御率']];db.players.forEach(p=>{let a=db.pitch.filter(x=>x.player===p.id),o=sum(a,'outs');rows.push([p.no,p.name,a.length,o,sum(a,'NP'),sum(a,'H'),sum(a,'SO'),sum(a,'BB'),sum(a,'ER'),o?(sum(a,'ER')*27/o).toFixed(2):''])});downloadCSV('清水東_投手通算',rows)}}
+function previewPhoto(e){let f=e.target.files[0];if(!f)return;let img=$('photoPreview');img.src=URL.createObjectURL(f);img.style.display='block'}
+function clearData(){if(confirm('全データを削除します。本当によろしいですか？')){db={players:[],games:[],bat:[],pitch:[]};save()}}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tab,.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$(b.dataset.tab).classList.add('active')}));
+$('gDate').value=new Date().toISOString().slice(0,10);render();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script></body></html>
