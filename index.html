@@ -47,7 +47,7 @@ footer{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;border-top:1p
 <section id="photo" class="panel">
 <div class="card"><div class="rowtitle"><h2>スコアブック写真を取り込む</h2><span class="badge">確認して保存</span></div>
 <p class="muted">今回送ってもらった用紙と同じ形式を想定した確認画面です。写真を選ぶと下に表示されます。</p>
-<label>スコアブック写真</label><input type="file" accept="image/*" capture="environment" id="scorePhotoNew" onchange="previewScorePhoto(event)"><img id="scorePreviewNew" alt="選択したスコアブック写真" style="display:none;width:100%;max-height:420px;object-fit:contain;margin-top:10px;border-radius:10px;background:#edf2f6">
+<label>スコアブック写真</label><input type="file" accept="image/*"id="scorePhotoNew" onchange="previewScorePhoto(event)"><img id="scorePreviewNew" alt="選択したスコアブック写真" style="display:none;width:100%;max-height:420px;object-fit:contain;margin-top:10px;border-radius:10px;background:#edf2f6">
 <div class="notice" style="margin-top:12px">現在は写真の取り込み・表示と、読み取り内容の確認入力までの試作です。手書き文字やスコア記号を自動判定するOCR機能はまだ接続していません。読み違いを防ぐため、確認した値だけ保存する設計にしています。</div>
 </div>
 <div class="card"><h2>① 試合情報を確認</h2><div class="formgrid">
