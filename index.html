@@ -114,7 +114,7 @@ function previewPhoto(e){let f=e.target.files[0];if(!f)return;let img=$('photoPr
 function previewScorePhoto(e){let f=e.target.files[0];if(!f)return;let img=$('scorePreviewNew');img.src=URL.createObjectURL(f);img.style.display='block'}
 function calcPhotoTotals(){let u=0,t=0;for(let i=1;i<=12;i++){u+=Number($('phU'+i).value||0);t+=Number($('phT'+i).value||0)}$('phUsTotal').textContent=u;$('phThemTotal').textContent=t;return {u,t}}
 function savePhotoGame(){let opponent=$('phOpponent').value.trim();if(!opponent)return alert('対戦相手を入力してください');let totals=calcPhotoTotals();let date=$('phDate').value||new Date().toISOString().slice(0,10);db.games.push({id:crypto.randomUUID(),date,type:$('phType').value,opponent,venue:$('phVenue').value,us:totals.u,them:totals.t,memo:$('phMemo').value,source:'scorebook-photo',start:$('phStart').value,end:$('phEnd').value,inningsUs:Array.from({length:12},(_,i)=>Number($('phU'+(i+1)).value||0)),inningsThem:Array.from({length:12},(_,i)=>Number($('phT'+(i+1)).value||0))});save();alert('確認した試合情報を保存しました。選手ごとの打撃・投手成績は、それぞれの入力画面で登録してください。');goTab('games')}
-function goTab(id){document.querySelectorAll('.tab,.panel').forEach(x=>x.classList.remove('active'));let tab=document.querySelector('.tab[data-tab=+id+]');if(tab)tab.classList.add('active');$(id).classList.add('active')}
+function goTab(id){document.querySelectorAll('.tab,.panel').forEach(x=>x.classList.remove('active'));let tab=document.querySelector('.tab[data-tab="'+id+'"]');if(tab)tab.classList.add('active');let panel=$(id);if(panel)panel.classList.add('active');}
 
 function clearData(){if(confirm('全データを削除します。本当によろしいですか？')){db={players:[],games:[],bat:[],pitch:[]};save()}}
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>goTab(b.dataset.tab)));
