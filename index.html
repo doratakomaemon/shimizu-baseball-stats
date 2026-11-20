@@ -122,8 +122,8 @@ function average(h,ab){return ab?(h/ab).toFixed(3).replace(/^0/,''):'.000'}
     <div class="card">
       <h2>投手通算成績</h2>
       ${table(['項目','成績'],pitching)}
-    </div>`;
-}function render(){ $('gameCount').textContent=db.games.length;$('playerCount').textContent=db.players.length;$('batCount').textContent=db.bat.length;$('pitchCount').textContent=db.pitch.length;
+    </div>`;}
+  function render(){ $('gameCount').textContent=db.games.length;$('playerCount').textContent=db.players.length;$('batCount').textContent=db.bat.length;$('pitchCount').textContent=db.pitch.length;
 let opts=arr=>arr.map(x=>`<option value="${x.id}">${esc(x.name||`${x.date} ${x.opponent}`)}</option>`).join('');
 let detail=$('detailPlayer');
 if(detail){
@@ -131,8 +131,9 @@ if(detail){
   detail.innerHTML='<option value="">選手を選択してください</option>'+
     db.players.map(p=>`<option value="${p.id}">${esc(p.no)}番 ${esc(p.name)}</option>`).join('');
   if(db.players.some(p=>p.id===selected))detail.value=selected;
-  renderPlayerDetail();
-}['bGame','pGame'].forEach(id=>$(id).innerHTML=opts(db.games));['bPlayer','pPlayer'].forEach(id=>$(id).innerHTML=opts(db.players));
+   renderPlayerDetail();
+};
+['bGame','pGame'].forEach(id=>$(id).innerHTML=opts(db.games));['bPlayer','pPlayer'].forEach(id=>$(id).innerHTML=opts(db.players));
 $('gamesTable').innerHTML=table(['日付','対戦相手','区分','得点','結果'],db.games.map(g=>[esc(g.date),esc(g.opponent),esc(g.type),`${g.us}－${g.them}`,g.us>g.them?'勝':g.us<g.them?'敗':'分']));
 $('recentGames').innerHTML=db.games.length?table(['日付','対戦相手','得点'],db.games.slice(-5).reverse().map(g=>[esc(g.date),esc(g.opponent),`${g.us}－${g.them}`])):'まだ試合が登録されていません。';
 $('rosterTable').innerHTML=table(['背番号','選手名','学年','守備位置'],db.players.map(p=>[esc(p.no),esc(p.name),esc(p.grade),esc(p.pos)]));
