@@ -36,7 +36,7 @@ footer{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;border-top:1p
 <header><div class="headrow"><div><div class="brand">SHIMIZU HIGASHI BASEBALL TEAM</div><h1>選手成績管理</h1><div class="season">試合記録・打撃成績・投手成績</div></div><div style="font-size:34px">⚾</div></div></header>
 <main>
 <nav class="tabs">
-<button class="tab active" data-tab="home">ホーム</button><button class="tab" data-tab="photo">写真読取</button><button class="tab" data-tab="games">試合登録</button><button class="tab" data-tab="bat">打撃入力</button><button class="tab" data-tab="pitch">投手入力</button><button class="tab" data-tab="stats">通算成績</button><button class="tab" data-tab="roster">選手登録</button><button class="tab" data-tab="backup">保存・移行</button>
+<button class="tab active" data-tab="home">ホーム</button><button class="tab" data-tab="photo">写真読取</button><button class="tab" data-tab="games">試合登録</button><button class="tab" data-tab="bat">打撃入力</button><button class="tab" data-tab="pitch">投手入力</button><button class="tab" data-tab="stats">通算成績</button><button class="tab" data-tab="roster">選手登録</button><button class="tab" data-tab="playerDetail">選手別成績</button><button class="tab" data-tab="backup">保存・移行</button>
 </nav>
 <section id="home" class="panel active">
 <div class="card"><h2>チーム成績サマリー</h2><div class="grid">
@@ -74,7 +74,16 @@ footer{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;border-top:1p
 <div><label>勝利</label><select id="pW"><option value="0">なし</option><option value="1">あり</option></select></div><div><label>敗戦</label><select id="pL"><option value="0">なし</option><option value="1">あり</option></select></div><div><label>セーブ</label><select id="pSV"><option value="0">なし</option><option value="1">あり</option></select></div></div><div class="actions"><button onclick="addPitch()">投手記録を保存</button></div><p class="muted">投球回はアウト数で入力します。例：6回2/3＝20アウト、5回1/3＝16アウト。</p></div><div class="card"><h2>最近の投手入力</h2><div id="pitchTable" class="empty">投手記録はありません。</div></div></section>
 <section id="stats" class="panel"><div class="card"><h2>選手別・打撃通算</h2><div id="batStats" class="empty">選手と打撃記録を登録してください。</div></div><div class="card"><h2>選手別・投手通算</h2><div id="pitchStats" class="empty">投手記録を登録してください。</div></div></section>
 <section id="roster" class="panel"><div class="card"><h2>選手を登録</h2><div class="formgrid"><div><label>背番号</label><input id="rNo" placeholder="例：1"></div><div><label>選手名</label><input id="rName" placeholder="選手名"></div><div><label>学年</label><select id="rGrade"><option value="">未設定</option><option>1年</option><option>2年</option><option>3年</option></select></div><div><label>守備位置</label><input id="rPos" placeholder="例：投手・遊撃手"></div></div><div class="actions"><button onclick="addPlayer()">選手を登録</button></div></div><div class="card"><h2>登録選手一覧</h2><div id="rosterTable" class="empty">選手はまだ登録されていません。</div></div></section>
-<section id="backup" class="panel"><div class="card"><h2>データのバックアップ</h2><p class="muted">試合・選手・打撃・投手データをJSONファイルに保存できます。別の端末に移すときも、このファイルを読み込んでください。</p><div class="actions">
+<section id="playerDetail" class="panel">
+  <div class="card">
+    <h2>選手別成績</h2>
+    <label>選手を選択</label>
+    <select id="detailPlayer" onchange="renderPlayerDetail()">
+      <option value="">選手を選択してください</option>
+    </select>
+  </div>
+  <div id="playerDetailContent"></div>
+</section><section id="backup" class="panel"><div class="card"><h2>データのバックアップ</h2><p class="muted">試合・選手・打撃・投手データをJSONファイルに保存できます。別の端末に移すときも、このファイルを読み込んでください。</p><div class="actions">
   <button onclick="exportData()">バックアップを書き出す</button> <label style="margin:0"> バックアップを読み込む<input type="file" id="importFile" accept=".json,application/json" onchange="importData(event)">
   </label></div></div><div class="card"><h2>CSV出力</h2><p class="muted">通算成績を表計算ソフトで確認できます。</p><div class="actions"><button class="secondary" onclick="exportCSV('bat')">打撃通算CSV</button><button class="secondary" onclick="exportCSV('pitch')">投手通算CSV</button></div></div><div class="card"><h2>スコア写真について</h2><label>写真を選択して確認</label><input type="file" accept="image/*" capture="environment" id="scorePhoto" onchange="previewPhoto(event)"><img id="photoPreview"><p class="muted">この試作版では写真の保管・プレビューまで対応しています。手書きスコアのAI自動読取は未接続です。写真をChatGPTに送って読み取り、確認した数値を入力する運用から始められます。</p></div><div class="card"><button class="danger" onclick="clearData()">この端末のデータをすべて削除</button><p class="muted">削除前に必ずバックアップしてください。</p></div></section>
 </main><footer>清水東高校野球部｜成績管理 試作版</footer>
@@ -94,9 +103,36 @@ function addBat(){if(!db.games.length||!db.players.length)return alert('先に�
 function addPitch(){if(!db.games.length||!db.players.length)return alert('先に試合と選手を登録してください');let player=$('pPlayer').value,game=$('pGame').value;if(!player||!game)return alert('試合と投手を選択してください');let x={id:crypto.randomUUID(),game,player};[['outs','pOuts'],['NP','pNP'],['BF','pBF'],['H','pH'],['HR','pHR'],['SO','pSO'],['BB','pBB'],['HBP','pHBP'],['R','pR'],['ER','pER'],['W','pW'],['L','pL'],['SV','pSV']].forEach(([k,id])=>x[k]=val(id));db.pitch.push(x);save();alert('投手記録を保存しました')}
 function sum(arr,k){return arr.reduce((a,x)=>a+(Number(x[k])||0),0)}
 function average(h,ab){return ab?(h/ab).toFixed(3).replace(/^0/,''):'.000'}
-function render(){ $('gameCount').textContent=db.games.length;$('playerCount').textContent=db.players.length;$('batCount').textContent=db.bat.length;$('pitchCount').textContent=db.pitch.length;
+  ['自責点',er],
+    ['勝利',sum(pit,'W')],
+    ['敗戦',sum(pit,'L')],
+    ['セーブ',sum(pit,'SV')],
+    ['防御率',outs?(er*27/outs).toFixed(2):'—']
+  ];
+
+  box.innerHTML=`
+    <div class="card">
+      <h2>${esc(p.no)}番 ${esc(p.name)}</h2>
+      <p>${esc(p.grade)}　${esc(p.pos)}</p>
+    </div>
+    <div class="card">
+      <h2>打撃通算成績</h2>
+      ${table(['項目','成績'],batting)}
+    </div>
+    <div class="card">
+      <h2>投手通算成績</h2>
+      ${table(['項目','成績'],pitching)}
+    </div>`;
+}function render(){ $('gameCount').textContent=db.games.length;$('playerCount').textContent=db.players.length;$('batCount').textContent=db.bat.length;$('pitchCount').textContent=db.pitch.length;
 let opts=arr=>arr.map(x=>`<option value="${x.id}">${esc(x.name||`${x.date} ${x.opponent}`)}</option>`).join('');
-['bGame','pGame'].forEach(id=>$(id).innerHTML=opts(db.games));['bPlayer','pPlayer'].forEach(id=>$(id).innerHTML=opts(db.players));
+let detail=$('detailPlayer');
+if(detail){
+  let selected=detail.value;
+  detail.innerHTML='<option value="">選手を選択してください</option>'+
+    db.players.map(p=>`<option value="${p.id}">${esc(p.no)}番 ${esc(p.name)}</option>`).join('');
+  if(db.players.some(p=>p.id===selected))detail.value=selected;
+  renderPlayerDetail();
+}['bGame','pGame'].forEach(id=>$(id).innerHTML=opts(db.games));['bPlayer','pPlayer'].forEach(id=>$(id).innerHTML=opts(db.players));
 $('gamesTable').innerHTML=table(['日付','対戦相手','区分','得点','結果'],db.games.map(g=>[esc(g.date),esc(g.opponent),esc(g.type),`${g.us}－${g.them}`,g.us>g.them?'勝':g.us<g.them?'敗':'分']));
 $('recentGames').innerHTML=db.games.length?table(['日付','対戦相手','得点'],db.games.slice(-5).reverse().map(g=>[esc(g.date),esc(g.opponent),`${g.us}－${g.them}`])):'まだ試合が登録されていません。';
 $('rosterTable').innerHTML=table(['背番号','選手名','学年','守備位置'],db.players.map(p=>[esc(p.no),esc(p.name),esc(p.grade),esc(p.pos)]));
