@@ -202,15 +202,16 @@ function renderPlayerDetail(){
 
   function makeRanking(items){
     return items.map(item=>{
-      let rows=db.players.map(p=>({p,v:item.value(p)}))
-        .filter(x=>x.v!==null)
-        .sort((a,b)=>item.lower?a.v-b.v:b.v-a.v);
-      return '<h4>'+item.name+'</h4>'+
-        table(['順位','選手','成績'],rows.map((x,i)=>[
-  i===0?'🥇 1位':i===1?'🥈 2位':i===2?'🥉 3位':(i+1)+'位',
-  esc(x.p.name),
-  item.format(x.v)
-]);
+      let rows=db.players.map(p=>({p:p,v:item.value(p)}));
+      rows=rows.filter(x=>x.v!==null);
+      rows.sort((a,b)=>item.lower?a.v-b.v:b.v-a.v);
+
+      let result=rows.map((x,i)=>{
+        let rank=(i===0?'🥇 1位':i===1?'🥈 2位':i===2?'🥉 3位':(i+1)+'位');
+        return [rank,esc(x.p.name),item.format(x.v)];
+      });
+
+      return '<h4>'+item.name+'</h4>'+table(['順位','選手','成績'],result);
     }).join('');
   }
 
