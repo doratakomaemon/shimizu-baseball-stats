@@ -36,7 +36,7 @@ footer{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;border-top:1p
 <header><div class="headrow"><div><div class="brand">SHIMIZU HIGASHI BASEBALL TEAM</div><h1>選手成績管理</h1><div class="season">試合記録・打撃成績・投手成績</div></div><div style="font-size:34px">⚾</div></div></header>
 <main>
 <nav class="tabs">
-<button class="tab active" data-tab="home">ホーム</button><button class="tab" data-tab="photo">写真読取</button><button class="tab" data-tab="games">試合登録</button><button class="tab" data-tab="bat">打撃入力</button><button class="tab" data-tab="pitch">投手入力</button><button class="tab" data-tab="stats">通算成績</button><button class="tab" data-tab="roster">選手登録</button><button class="tab" data-tab="playerDetail">選手別成績</button><button class="tab" data-tab="backup">保存・移行</button>
+<button class="tab active" data-tab="home">ホーム</button><button class="tab" data-tab="photo">写真読取</button><button class="tab" data-tab="games">試合登録</button><button class="tab" data-tab="bat">打撃入力</button><button class="tab" data-tab="pitch">投手入力</button><button class="tab" data-tab="stats">通算成績</button><button class="tab" data-tab="roster">選手登録</button><button class="tab" data-tab="playerDetail">選手別成績</button><button class="tab" data-tab="ranking">ランキング</button><button class="tab" data-tab="backup">保存・移行</button>
 </nav>
 <section id="home" class="panel active">
 <div class="card"><h2>チーム成績サマリー</h2><div class="grid">
@@ -83,6 +83,14 @@ footer{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;border-top:1p
     </select>
   </div>
   <div id="playerDetailContent"></div>
+</section><section id="ranking" class="panel">
+  <div class="card">
+    <h2>🏆 選手別ランキング</h2>
+    <h3>打撃ランキング</h3>
+    <div id="batRanking"></div>
+    <h3>投手ランキング</h3>
+    <div id="pitchRanking"></div>
+  </div>
 </section><section id="backup" class="panel"><div class="card"><h2>データのバックアップ</h2><p class="muted">試合・選手・打撃・投手データをJSONファイルに保存できます。別の端末に移すときも、このファイルを読み込んでください。</p><div class="actions">
   <button onclick="exportData()">バックアップを書き出す</button> <label style="margin:0"> バックアップを読み込む<input type="file" id="importFile" accept=".json,application/json" onchange="importData(event)">
   </label></div></div><div class="card"><h2>CSV出力</h2><p class="muted">通算成績を表計算ソフトで確認できます。</p><div class="actions"><button class="secondary" onclick="exportCSV('bat')">打撃通算CSV</button><button class="secondary" onclick="exportCSV('pitch')">投手通算CSV</button></div></div><div class="card"><h2>スコア写真について</h2><label>写真を選択して確認</label><input type="file" accept="image/*" capture="environment" id="scorePhoto" onchange="previewPhoto(event)"><img id="photoPreview"><p class="muted">この試作版では写真の保管・プレビューまで対応しています。手書きスコアのAI自動読取は未接続です。写真をChatGPTに送って読み取り、確認した数値を入力する運用から始められます。</p></div><div class="card"><button class="danger" onclick="clearData()">この端末のデータをすべて削除</button><p class="muted">削除前に必ずバックアップしてください。</p></div></section>
@@ -176,6 +184,35 @@ function renderPlayerDetail(){
       ${table(['項目','成績'],pitching)}
     </div>`;
 }
+      function renderRanking(){
+  let batting=[
+    {name:'打率',value:p=>{let a=db.bat.filter(x=>x.player===p.id);return sum(a,'AB')?sum(a,'H')/sum(a,'AB'):null;},format:v=>v.toFixed(3).replace(/^0/,'')},
+    {name:'安打数',value:p=>sum(db.bat.filter(x=>x.player===p.id),'H'),format:v=>v},
+    {name:'打点',value:p=>sum(db.bat.filter(x=>x.player===p.id),'RBI'),format:v=>v},
+    {name:'本塁打',value:p=>sum(db.bat.filter(x=>x.player===p.id),'HR'),format:v=>v},
+    {name:'盗塁',value:p=>sum(db.bat.filter(x=>x.player===p.id),'SB'),format:v=>v}
+  ];
+
+  let pitching=[
+    {name:'防御率',lower:true,value:p=>{let a=db.pitch.filter(x=>x.player===p.id),o=sum(a,'outs');return o?sum(a,'ER')*27/o:null;},format:v=>v.toFixed(2)},
+    {name:'奪三振',value:p=>sum(db.pitch.filter(x=>x.player===p.id),'SO'),format:v=>v},
+    {name:'勝利数',value:p=>sum(db.pitch.filter(x=>x.player===p.id),'W'),format:v=>v},
+    {name:'セーブ数',value:p=>sum(db.pitch.filter(x=>x.player===p.id),'SV'),format:v=>v}
+  ];
+
+  function makeRanking(items){
+    return items.map(item=>{
+      let rows=db.players.map(p=>({p,v:item.value(p)}))
+        .filter(x=>x.v!==null)
+        .sort((a,b)=>item.lower?a.v-b.v:b.v-a.v);
+      return '<h4>'+item.name+'</h4>'+
+        table(['順位','選手','成績'],rows.map((x,i)=>[i+1,esc(x.p.name),item.format(x.v)]));
+    }).join('');
+  }
+
+  $('batRanking').innerHTML=makeRanking(batting);
+  $('pitchRanking').innerHTML=makeRanking(pitching);
+}
   function render(){ $('gameCount').textContent=db.games.length;$('playerCount').textContent=db.players.length;$('batCount').textContent=db.bat.length;$('pitchCount').textContent=db.pitch.length;
 let opts=arr=>arr.map(x=>`<option value="${x.id}">${esc(x.name||`${x.date} ${x.opponent}`)}</option>`).join('');
 let detail=$('detailPlayer');
@@ -196,7 +233,7 @@ let bats=db.players.map(p=>{let a=db.bat.filter(x=>x.player===p.id),ab=sum(a,'AB
 $('batStats').innerHTML=table(['背番号','選手','試合記録','打席','打数','安打','二塁打','三塁打','本塁打','打点','得点','三振','打率','出塁率*','長打率'],bats);
 let pitches=db.players.map(p=>{let a=db.pitch.filter(x=>x.player===p.id),outs=sum(a,'outs'),er=sum(a,'ER');return [esc(p.no),esc(p.name),a.length,`${Math.floor(outs/3)}${outs%3?` ${outs%3}/3`:''}`,sum(a,'NP'),sum(a,'H'),sum(a,'SO'),sum(a,'BB'),sum(a,'W'),sum(a,'L'),sum(a,'SV'),outs?(er*27/outs).toFixed(2):'—']});
 $('pitchStats').innerHTML=table(['背番号','投手','登板','投球回','投球数','被安打','奪三振','与四球','勝','敗','S','防御率'],pitches);
-}
+renderRanking();}
 function exportData(){let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='清水東野球部_成績バックアップ_'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href)}
 function importData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.players||!x.games||!x.bat||!x.pitch)throw 0;if(!confirm('現在のデータを読み込んだデータで置き換えますか？'))return;db=x;save();alert('読み込みました')}catch{alert('ファイル形式が正しくありません')}};r.readAsText(f)}
 function csvCell(x){return '"'+String(x??'').replace(/"/g,'""')+'"'}
