@@ -103,7 +103,59 @@ function addBat(){if(!db.games.length||!db.players.length)return alert('先に�
 function addPitch(){if(!db.games.length||!db.players.length)return alert('先に試合と選手を登録してください');let player=$('pPlayer').value,game=$('pGame').value;if(!player||!game)return alert('試合と投手を選択してください');let x={id:crypto.randomUUID(),game,player};[['outs','pOuts'],['NP','pNP'],['BF','pBF'],['H','pH'],['HR','pHR'],['SO','pSO'],['BB','pBB'],['HBP','pHBP'],['R','pR'],['ER','pER'],['W','pW'],['L','pL'],['SV','pSV']].forEach(([k,id])=>x[k]=val(id));db.pitch.push(x);save();alert('投手記録を保存しました')}
 function sum(arr,k){return arr.reduce((a,x)=>a+(Number(x[k])||0),0)}
 function average(h,ab){return ab?(h/ab).toFixed(3).replace(/^0/,''):'.000'}
-  ['自責点',er],
+function renderPlayerDetail(){
+  let id=$('detailPlayer').value;
+  let box=$('playerDetailContent');
+
+  if(!id){
+    box.innerHTML='<div class="card empty">選手を選択してください。</div>';
+    return;
+  }
+
+  let p=db.players.find(x=>x.id===id);
+  if(!p)return;
+
+  let b=db.bat.filter(x=>x.player===id);
+  let ab=sum(b,'AB');
+  let h=sum(b,'H');
+  let bb=sum(b,'BB');
+  let hbp=sum(b,'HBP');
+  let sf=sum(b,'SF');
+  let tb=h+sum(b,'2B')+2*sum(b,'3B')+3*sum(b,'HR');
+  let obden=ab+bb+hbp+sf;
+
+  let pit=db.pitch.filter(x=>x.player===id);
+  let outs=sum(pit,'outs');
+  let er=sum(pit,'ER');
+
+  let batting=[
+    ['試合記録',b.length],
+    ['打席',sum(b,'PA')],
+    ['打数',ab],
+    ['安打',h],
+    ['二塁打',sum(b,'2B')],
+    ['三塁打',sum(b,'3B')],
+    ['本塁打',sum(b,'HR')],
+    ['打点',sum(b,'RBI')],
+    ['得点',sum(b,'R')],
+    ['三振',sum(b,'SO')],
+    ['四球',bb],
+    ['盗塁',sum(b,'SB')],
+    ['打率',average(h,ab)],
+    ['出塁率',obden?((h+bb+hbp)/obden).toFixed(3).replace(/^0/,''):'.000'],
+    ['長打率',ab?(tb/ab).toFixed(3).replace(/^0/,''):'.000']
+  ];
+
+  let pitching=[
+    ['登板',pit.length],
+    ['投球回',`${Math.floor(outs/3)}${outs%3?' '+outs%3+'/3':''}`],
+    ['投球数',sum(pit,'NP')],
+    ['被安打',sum(pit,'H')],
+    ['被本塁打',sum(pit,'HR')],
+    ['奪三振',sum(pit,'SO')],
+    ['与四球',sum(pit,'BB')],
+    ['失点',sum(pit,'R')],
+    ['自責点',er],
     ['勝利',sum(pit,'W')],
     ['敗戦',sum(pit,'L')],
     ['セーブ',sum(pit,'SV')],
@@ -122,7 +174,8 @@ function average(h,ab){return ab?(h/ab).toFixed(3).replace(/^0/,''):'.000'}
     <div class="card">
       <h2>投手通算成績</h2>
       ${table(['項目','成績'],pitching)}
-    </div>`;}
+    </div>`;
+}
   function render(){ $('gameCount').textContent=db.games.length;$('playerCount').textContent=db.players.length;$('batCount').textContent=db.bat.length;$('pitchCount').textContent=db.pitch.length;
 let opts=arr=>arr.map(x=>`<option value="${x.id}">${esc(x.name||`${x.date} ${x.opponent}`)}</option>`).join('');
 let detail=$('detailPlayer');
