@@ -206,7 +206,11 @@ function renderPlayerDetail(){
         .filter(x=>x.v!==null)
         .sort((a,b)=>item.lower?a.v-b.v:b.v-a.v);
       return '<h4>'+item.name+'</h4>'+
-        table(['順位','選手','成績'],rows.map((x,i)=>[i+1,esc(x.p.name),item.format(x.v)]));
+        table(['順位','選手','成績'],rows.map((x,i)=>[
+  i===0?'🥇 1位':i===1?'🥈 2位':i===2?'🥉 3位':(i+1)+'位',
+  esc(x.p.name),
+  item.format(x.v)
+]);
     }).join('');
   }
 
