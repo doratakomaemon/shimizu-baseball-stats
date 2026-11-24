@@ -56,6 +56,7 @@ footer{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;border-top:1p
   </div>
   <p id="ocrStatus" class="muted">まだ読み取りをしていません。</p>
   <textarea id="ocrResult" rows="8" placeholder="読み取り結果がここに表示されます"></textarea>
+  <div id="scoreReview"></div>
 </div>
 </div>
 <div class="card"><h2>① 試合情報を確認</h2><div class="formgrid">
@@ -354,7 +355,55 @@ async function readScorePhoto(){
       rows[0]+'： '+values[0].join('  ')+'\n'+
       rows[1]+'： '+values[1].join('  ')+'\n\n'+
       '※「？」は読み取れなかったマスです。確認して修正してください。';
+const review=$('scoreReview');
 
+function makeRow(name,values,row){
+  return `
+    <h3>${name}</h3>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px">
+      ${values.map((v,i)=>`
+        <label style="font-size:12px">
+          ${i+1}回
+          <input
+            type="number"
+            min="0"
+            max="99"
+            data-row="${row}"
+            data-inning="${i}"
+            value="${v==='？'?'':v}"
+            style="width:100%;box-sizing:border-box"
+          >
+        </label>
+      `).join('')}
+    </div>
+    <p>合計：<strong id="scoreTotal${row}">0</strong> 点</p>
+  `;
+}
+
+review.innerHTML=
+  '<h3>読み取り結果の確認・修正</h3>'+
+  makeRow('清水東',values[0],0)+
+  makeRow('富士',values[1],1);
+
+function updateScoreTotals(){
+  for(let r=0;r<2;r++){
+    let total=0;
+
+    review.querySelectorAll(
+      `input[data-row="${r}"]`
+    ).forEach(input=>{
+      total+=Number(input.value)||0;
+    });
+
+    $('scoreTotal'+r).textContent=total;
+  }
+}
+
+review.querySelectorAll('input').forEach(input=>{
+  input.addEventListener('input',updateScoreTotals);
+});
+
+updateScoreTotals();
     status.textContent='24マスの読み取りが完了しました！';
 
   }catch(error){
