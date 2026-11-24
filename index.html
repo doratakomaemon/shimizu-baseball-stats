@@ -404,6 +404,29 @@ review.querySelectorAll('input').forEach(input=>{
 });
 
 updateScoreTotals();
+    function applyScoreReview(){
+  for(let r=0;r<2;r++){
+    for(let i=0;i<12;i++){
+      const input=review.querySelector(
+        `input[data-row="${r}"][data-inning="${i}"]`
+      );
+
+      const target=$( (r===0?'phU':'phT')+(i+1) );
+
+      if(input && target){
+        target.value=input.value;
+      }
+    }
+  }
+
+  calcPhotoTotals();
+  alert('修正したイニング得点を試合登録画面に反映しました。');
+}
+
+const applyButton=document.createElement('button');
+applyButton.textContent='修正した得点を試合情報に反映';
+applyButton.onclick=applyScoreReview;
+review.appendChild(applyButton);
     status.textContent='24マスの読み取りが完了しました！';
 
   }catch(error){
