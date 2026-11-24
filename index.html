@@ -285,6 +285,8 @@ async function readScorePhoto(){
   status.textContent='写真を準備しています…';
   result.value='';
 
+  let worker;
+
   try{
     const img=new Image();
     const imageURL=URL.createObjectURL(file);
@@ -295,73 +297,74 @@ async function readScorePhoto(){
       img.src=imageURL;
     });
 
-    function makeCrop(x,y,w,h){
-      const scale=3;
-      const canvas=document.createElement('canvas');
-
-      const sx=img.naturalWidth*x;
-      const sy=img.naturalHeight*y;
-      const sw=img.naturalWidth*w;
-      const sh=img.naturalHeight*h;
-
-      canvas.width=Math.round(sw*scale);
-      canvas.height=Math.round(sh*scale);
-
-      const ctx=canvas.getContext('2d');
-      ctx.filter='grayscale(100%) contrast(170%)';
-      ctx.drawImage(
-        img,sx,sy,sw,sh,
-        0,0,canvas.width,canvas.height
-      );
-
-      return canvas;
-    }
-
-    const headerImage=makeCrop(0.02,0.01,0.63,0.09);
-    const scoreImage=makeCrop(0.64,0.02,0.35,0.09);
-
     URL.revokeObjectURL(imageURL);
 
-    status.textContent='① 試合情報を読み取っています…';
+    const canvas=document.createElement('canvas');
+    const ctx=canvas.getContext('2d');
 
-    const header=await Tesseract.recognize(
-      headerImage,
-      'eng',
-      {
-        logger:m=>{
-          if(m.status==='recognizing text'){
-            status.textContent='① 試合情報 '+Math.round(m.progress*100)+'%';
-          }
-        }
+    canvas.width=120;
+    canvas.height=120;
+
+    worker=await Tesseract.createWorker('eng');
+
+    await worker.setParameters({
+      tessedit_char_whitelist:'0123456789',
+      tessedit_pageseg_mode:'10'
+    });
+
+    const rows=['清水東','富士'];
+    const values=[[],[]];
+
+    // 今回の写真の得点表の位置
+    const startX=img.naturalWidth*0.7102;
+    const stepX=img.naturalWidth*0.0203;
+    const startY=img.naturalHeight*0.041;
+    const rowStep=img.naturalHeight*0.028;
+
+    for(let r=0;r<2;r++){
+      for(let c=0;c<12;c++){
+
+        status.textContent=
+          rows[r]+' '+(c+1)+'回を読み取り中…';
+
+        const sx=startX+c*stepX+2;
+        const sy=startY+r*rowStep+2;
+        const sw=stepX-4;
+        const sh=rowStep-4;
+
+        ctx.clearRect(0,0,120,120);
+        ctx.filter='grayscale(100%) contrast(180%)';
+
+        ctx.drawImage(
+          img,
+          sx,sy,sw,sh,
+          0,0,120,120
+        );
+
+        const output=await worker.recognize(canvas);
+        const number=(output.data.text.match(/[0-9]/g)||[]).join('');
+
+        values[r].push(number||'？');
       }
-    );
-
-    status.textContent='② イニング得点を読み取っています…';
-
-    const score=await Tesseract.recognize(
-      scoreImage,
-      'jpn+eng',
-      {
-        logger:m=>{
-          if(m.status==='recognizing text'){
-            status.textContent='② 得点表 '+Math.round(m.progress*100)+'%';
-          }
-        }
-      }
-    );
+    }
 
     result.value=
-      '【試合情報】\n'+
-      header.data.text+
-      '\n\n【イニング得点】\n'+
-      score.data.text;
+      '【イニング得点・個別読み取り】\n'+
+      '回： 1  2  3  4  5  6  7  8  9 10 11 12\n'+
+      rows[0]+'： '+values[0].join('  ')+'\n'+
+      rows[1]+'： '+values[1].join('  ')+'\n\n'+
+      '※「？」は読み取れなかったマスです。確認して修正してください。';
 
-    status.textContent='読み取り完了！内容を確認してください。';
+    status.textContent='24マスの読み取りが完了しました！';
 
   }catch(error){
     console.error(error);
     status.textContent='読み取りに失敗しました。';
     alert('読み取りに失敗しました。');
+  }finally{
+    if(worker){
+      await worker.terminate();
+    }
   }
 }
 function clearData(){if(confirm('全データを削除します。本当によろしいですか？')){db={players:[],games:[],bat:[],pitch:[]};save()}}
