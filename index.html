@@ -423,10 +423,6 @@ updateScoreTotals();
   alert('修正したイニング得点を試合登録画面に反映しました。');
 }
 
-const applyButton=document.createElement('button');
-applyButton.textContent='修正した得点を試合情報に反映';
-applyButton.onclick=applyScoreReview;
-review.appendChild(applyButton);
     status.textContent='24マスの読み取りが完了しました！';
 
   }catch(error){
@@ -439,6 +435,29 @@ review.appendChild(applyButton);
     }
   }
 }
+function applyScoreReview(){
+  const review=$('scoreReview');
+
+  for(let r=0;r<2;r++){
+    for(let i=0;i<12;i++){
+      const input=review.querySelector(
+        `input[data-row="${r}"][data-inning="${i}"]`
+      );
+      const target=$((r===0?'phU':'phT')+(i+1));
+
+      if(input && target){
+        target.value=input.value;
+      }
+    }
+  }
+
+  calcPhotoTotals();
+  alert('修正した得点を試合登録画面に反映しました。');
+}  
+  const applyButton=document.createElement('button');
+applyButton.textContent='修正した得点を試合情報に反映';
+applyButton.onclick=applyScoreReview;
+$('scoreReview').appendChild(applyButton);
 function clearData(){if(confirm('全データを削除します。本当によろしいですか？')){db={players:[],games:[],bat:[],pitch:[]};save()}}
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>goTab(b.dataset.tab)));
 document.querySelectorAll('.inning').forEach(el=>el.addEventListener('input',calcPhotoTotals));
