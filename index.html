@@ -282,7 +282,7 @@ async function readScorePhoto(){
   const status=$('ocrStatus');
   const result=$('ocrResult');
 
-  status.textContent='写真を拡大・補正しています…';
+  status.textContent='写真を準備しています…';
   result.value='';
 
   try{
@@ -295,32 +295,67 @@ async function readScorePhoto(){
       img.src=imageURL;
     });
 
-    const scale=2;
-    const canvas=document.createElement('canvas');
-    canvas.width=img.naturalWidth*scale;
-    canvas.height=img.naturalHeight*scale;
+    function makeCrop(x,y,w,h){
+      const scale=3;
+      const canvas=document.createElement('canvas');
 
-    const ctx=canvas.getContext('2d');
-    ctx.filter='grayscale(100%) contrast(160%)';
-    ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      const sx=img.naturalWidth*x;
+      const sy=img.naturalHeight*y;
+      const sw=img.naturalWidth*w;
+      const sh=img.naturalHeight*h;
+
+      canvas.width=Math.round(sw*scale);
+      canvas.height=Math.round(sh*scale);
+
+      const ctx=canvas.getContext('2d');
+      ctx.filter='grayscale(100%) contrast(170%)';
+      ctx.drawImage(
+        img,sx,sy,sw,sh,
+        0,0,canvas.width,canvas.height
+      );
+
+      return canvas;
+    }
+
+    const headerImage=makeCrop(0.02,0.01,0.63,0.09);
+    const scoreImage=makeCrop(0.64,0.02,0.35,0.09);
 
     URL.revokeObjectURL(imageURL);
 
-    status.textContent='拡大した写真を読み取っています…';
+    status.textContent='① 試合情報を読み取っています…';
 
-    const output=await Tesseract.recognize(
-      canvas,
+    const header=await Tesseract.recognize(
+      headerImage,
       'jpn+eng',
       {
         logger:m=>{
           if(m.status==='recognizing text'){
-            status.textContent='読み取り中… '+Math.round(m.progress*100)+'%';
+            status.textContent='① 試合情報 '+Math.round(m.progress*100)+'%';
           }
         }
       }
     );
 
-    result.value=output.data.text;
+    status.textContent='② イニング得点を読み取っています…';
+
+    const score=await Tesseract.recognize(
+      scoreImage,
+      'jpn+eng',
+      {
+        logger:m=>{
+          if(m.status==='recognizing text'){
+            status.textContent='② 得点表 '+Math.round(m.progress*100)+'%';
+          }
+        }
+      }
+    );
+
+    result.value=
+      '【試合情報】\n'+
+      header.data.text+
+      '\n\n【イニング得点】\n'+
+      score.data.text;
+
     status.textContent='読み取り完了！内容を確認してください。';
 
   }catch(error){
