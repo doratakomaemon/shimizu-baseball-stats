@@ -329,7 +329,7 @@ async function readScorePhoto(){
     alert('読み取りに失敗しました。');
   }
 }
-}function clearData(){if(confirm('全データを削除します。本当によろしいですか？')){db={players:[],games:[],bat:[],pitch:[]};save()}}
+function clearData(){if(confirm('全データを削除します。本当によろしいですか？')){db={players:[],games:[],bat:[],pitch:[]};save()}}
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>goTab(b.dataset.tab)));
 document.querySelectorAll('.inning').forEach(el=>el.addEventListener('input',calcPhotoTotals));
 $('gDate').value=new Date().toISOString().slice(0,10);$('phDate').value=new Date().toISOString().slice(0,10);render();
