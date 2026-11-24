@@ -326,7 +326,7 @@ async function readScorePhoto(){
 
     const header=await Tesseract.recognize(
       headerImage,
-      'jpn+eng',
+      'eng',
       {
         logger:m=>{
           if(m.status==='recognizing text'){
