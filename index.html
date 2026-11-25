@@ -64,7 +64,20 @@ footer{position:fixed;bottom:0;left:0;right:0;background:#ffffffed;border-top:1p
 </div></div>
 <div class="card"><h2>② イニング別得点を確認</h2><p class="muted">各回の得点を入力してください。延長は10〜12回も使えます。</p><div class="tablewrap"><table><thead><tr><th>チーム</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>計</th></tr></thead><tbody><tr><th>清水東</th><td><input class="inning" id="phU1" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phU2" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phU3" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phU4" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phU5" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phU6" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phU7" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phU8" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phU9" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phU10" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phU11" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phU12" type="number" min="0" inputmode="numeric"></td><td id="phUsTotal">0</td></tr><tr><th>相手</th><td><input class="inning" id="phT1" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phT2" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phT3" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phT4" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phT5" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phT6" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phT7" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phT8" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phT9" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phT10" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phT11" type="number" min="0" inputmode="numeric"></td><td><input class="inning" id="phT12" type="number" min="0" inputmode="numeric"></td><td id="phThemTotal">0</td></tr></tbody></table></div>
 <div class="actions"><button class="secondary" onclick="calcPhotoTotals()">得点を再計算</button></div></div>
-<div class="card"><h2>③ 確認して試合を保存</h2><label>読み取り・確認メモ</label><textarea id="phMemo" rows="2" placeholder="判読しにくかった箇所、確認事項など"></textarea><div class="actions"><button onclick="savePhotoGame()">確認した試合情報を保存</button><button class="secondary" onclick="goTab('bat')">打撃成績入力へ</button><button class="secondary" onclick="goTab('pitch')">投手成績入力へ</button></div></div>
+<div class="card">
+  <h2>③ 選手ごとの打撃成績を確認</h2>
+  <p class="muted">
+    写真から読み取った選手ごとの成績を確認・修正します。
+  </p>
+  
+  <button onclick="showPhotoBatReview()">
+  選手別打撃成績の入力欄を表示
+</button>
+  
+  <div id="batPhotoReview">
+    <p class="muted">まだ打撃成績を読み取っていません。</p>
+  </div>
+</div><div class="card"><h2>③ 確認して試合を保存</h2><label>読み取り・確認メモ</label><textarea id="phMemo" rows="2" placeholder="判読しにくかった箇所、確認事項など"></textarea><div class="actions"><button onclick="savePhotoGame()">確認した試合情報を保存</button><button class="secondary" onclick="goTab('bat')">打撃成績入力へ</button><button class="secondary" onclick="goTab('pitch')">投手成績入力へ</button></div></div>
 </section>
 <section id="games" class="panel"><div class="card"><h2>試合を登録</h2><div class="formgrid">
 <div><label>試合日</label><input id="gDate" type="date"></div><div><label>大会・区分</label><input id="gType" placeholder="例：練習試合・秋季大会"></div><div><label>対戦相手</label><input id="gOpponent" placeholder="例：富士高校"></div><div><label>球場</label><input id="gVenue" placeholder="球場名"></div><div><label>清水東 得点</label><input id="gUs" type="number" min="0"></div><div><label>相手 得点</label><input id="gThem" type="number" min="0"></div></div><label>メモ</label><input id="gMemo" placeholder="試合のメモ（任意）"><div class="actions"><button onclick="addGame()">試合を保存</button></div></div><div class="card"><h2>登録済み試合</h2><div id="gamesTable" class="empty">試合データはありません。</div></div></section>
@@ -117,7 +130,34 @@ function addGame(){let opponent=$('gOpponent').value.trim();if(!opponent)return 
 function addPlayer(){let name=$('rName').value.trim();if(!name)return alert('選手名を入力してください');if(db.players.some(p=>p.name===name))return alert('同じ選手名が登録されています');db.players.push({id:crypto.randomUUID(),no:$('rNo').value.trim(),name,grade:$('rGrade').value,pos:$('rPos').value.trim()});['rNo','rName','rGrade','rPos'].forEach(id=>$(id).value='');save()}
 function val(id){return num(id)}
 function addBat(){if(!db.games.length||!db.players.length)return alert('先に試合と選手を登録してください');let player=$('bPlayer').value,game=$('bGame').value;if(!player||!game)return alert('試合と選手を選択してください');let x={id:crypto.randomUUID(),game,player,order:val('bOrder')};[['PA','bPA'],['AB','bAB'],['H','bH'],['2B','b2B'],['3B','b3B'],['HR','bHR'],['RBI','bRBI'],['R','bR'],['BB','bBB'],['HBP','bHBP'],['SO','bSO'],['SH','bSH'],['SF','bSF'],['SB','bSB']].forEach(([k,id])=>x[k]=val(id));db.bat.push(x);save();alert('打撃記録を保存しました')}
-function addPitch(){if(!db.games.length||!db.players.length)return alert('先に試合と選手を登録してください');let player=$('pPlayer').value,game=$('pGame').value;if(!player||!game)return alert('試合と投手を選択してください');let x={id:crypto.randomUUID(),game,player};[['outs','pOuts'],['NP','pNP'],['BF','pBF'],['H','pH'],['HR','pHR'],['SO','pSO'],['BB','pBB'],['HBP','pHBP'],['R','pR'],['ER','pER'],['W','pW'],['L','pL'],['SV','pSV']].forEach(([k,id])=>x[k]=val(id));db.pitch.push(x);save();alert('投手記録を保存しました')}
+function savePhotoBat(row){
+  const game=$('bGame').value;
+  const player=$( 'photoBatPlayer'+row ).value;
+
+  if(!game)return alert('先に試合を登録してください');
+  if(!player)return alert('選手を選択してください');
+
+  const x={
+    id:crypto.randomUUID(),
+    game,
+    player,
+    order:Number($( 'photoBatOrder'+row ).value)||0
+  };
+
+  const fields=[
+    'PA','AB','H','2B','3B','HR',
+    'RBI','R','BB','HBP','SO','SH','SF','SB'
+  ];
+
+  fields.forEach(k=>{
+    x[k]=Number($( 'photoBat'+k+row ).value)||0;
+  });
+
+  db.bat.push(x);
+  save();
+
+  alert('打撃成績を保存しました！');
+}function addPitch(){if(!db.games.length||!db.players.length)return alert('先に試合と選手を登録してください');let player=$('pPlayer').value,game=$('pGame').value;if(!player||!game)return alert('試合と投手を選択してください');let x={id:crypto.randomUUID(),game,player};[['outs','pOuts'],['NP','pNP'],['BF','pBF'],['H','pH'],['HR','pHR'],['SO','pSO'],['BB','pBB'],['HBP','pHBP'],['R','pR'],['ER','pER'],['W','pW'],['L','pL'],['SV','pSV']].forEach(([k,id])=>x[k]=val(id));db.pitch.push(x);save();alert('投手記録を保存しました')}
 function sum(arr,k){return arr.reduce((a,x)=>a+(Number(x[k])||0),0)}
 function average(h,ab){return ab?(h/ab).toFixed(3).replace(/^0/,''):'.000'}
 function renderPlayerDetail(){
@@ -457,8 +497,79 @@ function applyScoreReview(){
   const applyButton=document.createElement('button');
 applyButton.textContent='修正した得点を試合情報に反映';
 applyButton.onclick=applyScoreReview;
-$('scoreReview').appendChild(applyButton);
-function clearData(){if(confirm('全データを削除します。本当によろしいですか？')){db={players:[],games:[],bat:[],pitch:[]};save()}}
+$('scoreReview').appendChild(applyButton);function renderPhotoBatReview(){
+  const box=$('batPhotoReview');
+
+  if(!box)return;
+
+  if(!db.players.length){
+    box.textContent='先に選手を登録してください。';
+    return;
+  }
+
+  box.innerHTML='';
+
+  const fields=[
+    ['PA','打席'],
+    ['AB','打数'],
+    ['H','安打'],
+    ['2B','二塁打'],
+    ['3B','三塁打'],
+    ['HR','本塁打'],
+    ['RBI','打点'],
+    ['R','得点'],
+    ['BB','四球'],
+    ['HBP','死球'],
+    ['SO','三振'],
+    ['SH','犠打'],
+    ['SF','犠飛'],
+    ['SB','盗塁']
+  ];
+
+  for(let i=0;i<9;i++){
+    const options=db.players.map(p=>
+      `<option value="${p.id}">${p.no||''} ${p.name}</option>`
+    ).join('');
+
+    let html=`
+      <div class="card">
+        <h3>${i+1}番打者</h3>
+        <label>選手</label>
+        <select id="photoBatPlayer${i}">
+          <option value="">選手を選択</option>
+          ${options}
+        </select>
+
+        <label>打順</label>
+        <input id="photoBatOrder${i}" type="number" value="${i+1}">
+        <div class="grid">
+    `;
+
+    fields.forEach(([key,label])=>{
+      html+=`
+        <div>
+          <label>${label}</label>
+          <input type="number" min="0" value="0"
+            id="photoBat${key}${i}">
+        </div>
+      `;
+    });
+
+    html+=`
+        </div>
+        <button onclick="savePhotoBat(${i})">
+          この選手の成績を保存
+        </button>
+      </div>
+    `;
+
+    box.insertAdjacentHTML('beforeend',html);
+  }
+}
+function showPhotoBatReview(){
+  renderPhotoBatReview();
+}
+  function clearData(){if(confirm('全データを削除します。本当によろしいですか？')){db={players:[],games:[],bat:[],pitch:[]};save()}}
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>goTab(b.dataset.tab)));
 document.querySelectorAll('.inning').forEach(el=>el.addEventListener('input',calcPhotoTotals));
 $('gDate').value=new Date().toISOString().slice(0,10);$('phDate').value=new Date().toISOString().slice(0,10);render();
