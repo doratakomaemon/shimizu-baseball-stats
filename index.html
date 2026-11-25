@@ -132,16 +132,24 @@ function val(id){return num(id)}
 function addBat(){if(!db.games.length||!db.players.length)return alert('先に試合と選手を登録してください');let player=$('bPlayer').value,game=$('bGame').value;if(!player||!game)return alert('試合と選手を選択してください');let x={id:crypto.randomUUID(),game,player,order:val('bOrder')};[['PA','bPA'],['AB','bAB'],['H','bH'],['2B','b2B'],['3B','b3B'],['HR','bHR'],['RBI','bRBI'],['R','bR'],['BB','bBB'],['HBP','bHBP'],['SO','bSO'],['SH','bSH'],['SF','bSF'],['SB','bSB']].forEach(([k,id])=>x[k]=val(id));db.bat.push(x);save();alert('打撃記録を保存しました')}
 function savePhotoBat(row){
   const game=$('bGame').value;
-  const player=$( 'photoBatPlayer'+row ).value;
+  const player=$('photoBatPlayer'+row).value;
 
   if(!game)return alert('先に試合を登録してください');
   if(!player)return alert('選手を選択してください');
+
+  const exists=db.bat.some(x=>
+    x.game===game && x.player===player
+  );
+
+  if(exists){
+    return alert('この試合には、この選手の打撃成績がすでに登録されています。');
+  }
 
   const x={
     id:crypto.randomUUID(),
     game,
     player,
-    order:Number($( 'photoBatOrder'+row ).value)||0
+    order:Number($('photoBatOrder'+row).value)||0
   };
 
   const fields=[
@@ -150,14 +158,15 @@ function savePhotoBat(row){
   ];
 
   fields.forEach(k=>{
-    x[k]=Number($( 'photoBat'+k+row ).value)||0;
+    x[k]=Number($('photoBat'+k+row).value)||0;
   });
 
   db.bat.push(x);
   save();
 
   alert('打撃成績を保存しました！');
-}function addPitch(){if(!db.games.length||!db.players.length)return alert('先に試合と選手を登録してください');let player=$('pPlayer').value,game=$('pGame').value;if(!player||!game)return alert('試合と投手を選択してください');let x={id:crypto.randomUUID(),game,player};[['outs','pOuts'],['NP','pNP'],['BF','pBF'],['H','pH'],['HR','pHR'],['SO','pSO'],['BB','pBB'],['HBP','pHBP'],['R','pR'],['ER','pER'],['W','pW'],['L','pL'],['SV','pSV']].forEach(([k,id])=>x[k]=val(id));db.pitch.push(x);save();alert('投手記録を保存しました')}
+}
+  function addPitch(){if(!db.games.length||!db.players.length)return alert('先に試合と選手を登録してください');let player=$('pPlayer').value,game=$('pGame').value;if(!player||!game)return alert('試合と投手を選択してください');let x={id:crypto.randomUUID(),game,player};[['outs','pOuts'],['NP','pNP'],['BF','pBF'],['H','pH'],['HR','pHR'],['SO','pSO'],['BB','pBB'],['HBP','pHBP'],['R','pR'],['ER','pER'],['W','pW'],['L','pL'],['SV','pSV']].forEach(([k,id])=>x[k]=val(id));db.pitch.push(x);save();alert('投手記録を保存しました')}
 function sum(arr,k){return arr.reduce((a,x)=>a+(Number(x[k])||0),0)}
 function average(h,ab){return ab?(h/ab).toFixed(3).replace(/^0/,''):'.000'}
 function renderPlayerDetail(){
@@ -526,7 +535,7 @@ $('scoreReview').appendChild(applyButton);function renderPhotoBatReview(){
     ['SB','盗塁']
   ];
 
-  for(let i=0;i<15;i++){
+  for(let i=0;i<16;i++){
     const options=db.players.map(p=>
       `<option value="${p.id}">${p.no||''} ${p.name}</option>`
     ).join('');
